@@ -10,31 +10,31 @@ async function main() {
     const categories = [
         {
             category: "Gant rouge",
-            label: "Gants de protection rouges",
+            label: "Gant rouge",
             minThreshold: 10,
             stock: { "S": 20, "M": 30, "L": 30, "XL": 15 }
         },
         {
             category: "Gant noir",
-            label: "Gants de protection noirs",
+            label: "Gant noir",
             minThreshold: 10,
             stock: { "S": 20, "M": 30, "L": 30, "XL": 15 }
         },
         {
             category: "Chaussure de sécurité",
-            label: "Chaussures de sécurité montantes S3",
+            label: "Chaussure de sécurité",
             minThreshold: 5,
             stock: { "39": 5, "40": 8, "41": 12, "42": 15, "43": 10, "44": 5 }
         },
         {
             category: "Chaussette Blanche",
-            label: "Chaussettes de confort blanches (lot de 3)",
+            label: "Chaussette Blanche",
             minThreshold: 20,
             stock: { "TU": 50 }
         },
         {
             category: "Chaussette",
-            label: "Chaussettes de confort noires (lot de 3)",
+            label: "Chaussette",
             minThreshold: 20,
             stock: { "39-42": 40, "43-46": 40 }
         },

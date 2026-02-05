@@ -199,16 +199,15 @@ export default function ManagerDashboard({
                                 <CardTitle>Demandes en cours</CardTitle>
                                 <CardDescription>Validez ou refusez les demandes de vos collaborateurs.</CardDescription>
                             </div>
-                            {requests.filter(r => r.status === "Pending").length > 0 && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-brand border-brand/20 hover:bg-brand/5"
-                                    onClick={exportRequestsToCSV}
-                                >
-                                    <Download className="w-4 h-4 mr-2" /> Exporter CSV
-                                </Button>
-                            )}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-brand border-brand/20 hover:bg-brand/5"
+                                onClick={exportRequestsToCSV}
+                                disabled={requests.filter(r => r.status === "Pending").length === 0}
+                            >
+                                <Download className="w-4 h-4 mr-2" /> Exporter CSV
+                            </Button>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -322,18 +321,24 @@ export default function ManagerDashboard({
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="inventory">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-bold text-gray-900">État des stocks</h2>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-brand border-brand/20 hover:bg-brand/5"
-                            onClick={exportInventoryToCSV}
-                        >
-                            <Download className="w-4 h-4 mr-2" /> Exporter Inventaire
-                        </Button>
-                    </div>
+                <TabsContent value="inventory" className="space-y-6">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                            <div>
+                                <CardTitle>État des stocks</CardTitle>
+                                <CardDescription>Consultez et modifiez les quantités en stock.</CardDescription>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-brand border-brand/20 hover:bg-brand/5"
+                                onClick={exportInventoryToCSV}
+                            >
+                                <Download className="w-4 h-4 mr-2" /> Exporter Inventaire
+                            </Button>
+                        </CardHeader>
+                    </Card>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {stock.map(item => (
                             <Card key={item.id} className="overflow-hidden">

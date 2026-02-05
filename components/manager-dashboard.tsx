@@ -42,6 +42,7 @@ export default function ManagerDashboard({
     const [editingStockId, setEditingStockId] = useState<string | null>(null)
     const [editValues, setEditValues] = useState<Record<string, number>>({})
     const [showSuccess, setShowSuccess] = useState(false)
+    const [activeTab, setActiveTab] = useState("requests")
     const router = useRouter()
     // Auth is now handled by the proxy middleware
     const isAuthorized = true
@@ -51,7 +52,7 @@ export default function ManagerDashboard({
     const handleValidate = async (id: string) => {
         const res = await validateRequest(id)
         if (res.success) {
-            window.location.reload()
+            router.refresh()
         } else {
             alert(res.error)
         }
@@ -59,7 +60,7 @@ export default function ManagerDashboard({
 
     const handleReject = async (id: string) => {
         await rejectRequest(id)
-        window.location.reload()
+        router.refresh()
     }
 
     const startEditing = (item: StockItem) => {
@@ -129,7 +130,7 @@ export default function ManagerDashboard({
                 </div>
             )}
 
-            <Tabs defaultValue="requests" className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="bg-white border shadow-sm h-12">
                     <TabsTrigger value="requests" className="data-[state=active]:text-brand">
                         <ClipboardList className="w-4 h-4 mr-2" /> Demandes

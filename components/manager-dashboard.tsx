@@ -20,7 +20,7 @@ interface Request {
     size: string
     reason: string
     status: string
-    createdAt: Date
+    createdAt: string
 }
 
 interface StockItem {

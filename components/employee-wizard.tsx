@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { createRequest } from "@/app/actions"
+import { sortSizes } from "@/lib/utils"
 import { ChevronRight, ChevronLeft, CheckCircle2, User, HardHat, Ruler, Info } from "lucide-react"
 
 interface StockItem {
@@ -30,7 +31,7 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
     })
 
     const selectedCategory = stockItems.find(item => item.category === form.category)
-    const sizes = selectedCategory ? Object.keys(selectedCategory.stock).sort() : []
+    const sizes = selectedCategory ? sortSizes(Object.keys(selectedCategory.stock)) : []
 
     const next = () => setStep(s => s + 1)
     const back = () => setStep(s => s - 1)

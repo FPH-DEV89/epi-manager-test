@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { validateRequest, rejectRequest, updateStock } from "@/app/actions"
+import { sortSizes } from "@/lib/utils"
 import { Package, ClipboardList, Settings, Save, X, Check, History, Download } from "lucide-react"
 
 interface Request {
@@ -363,7 +364,8 @@ export default function ManagerDashboard({
                                 <CardContent className="pt-6">
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-4 gap-2">
-                                            {Object.entries(item.stock).map(([size, qty]: [string, any]) => {
+                                            {sortSizes(Object.keys(item.stock)).map((size) => {
+                                                const qty = item.stock[size]
                                                 const isLow = qty < item.minThreshold
                                                 return (
                                                     <div key={size} className={`p-2 rounded-lg border text-center ${isLow ? 'bg-red-50 border-red-200' : 'bg-white'}`}>

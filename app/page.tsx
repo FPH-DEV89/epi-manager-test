@@ -5,7 +5,9 @@ export const dynamic = "force-dynamic"
 
 export default async function HomePage() {
   try {
-    const stockItems = await prisma.stockItem.findMany()
+    const stockItems = await prisma.stockItem.findMany({
+      orderBy: { label: 'asc' }
+    })
 
     // Transform JSON to plain object for Client Component
     const serializedStock = stockItems.map(item => ({

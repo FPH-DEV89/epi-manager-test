@@ -7,7 +7,7 @@ export default async function AdminPage() {
     try {
         const [requests, stock] = await Promise.all([
             prisma.request.findMany({ orderBy: { createdAt: 'desc' } }),
-            prisma.stockItem.findMany()
+            prisma.stockItem.findMany({ orderBy: { label: 'asc' } })
         ])
 
         // Serialize Date objects to ISO strings for Client Component

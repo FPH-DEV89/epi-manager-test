@@ -103,6 +103,7 @@ export async function updateStock(categoryId: string, size: string, quantity: nu
         });
 
         revalidatePath("/");
+        revalidatePath("/admin");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Erreur lors de la mise à jour du stock" };

@@ -364,8 +364,8 @@ export default function ManagerDashboard({
                                 <CardContent className="pt-6">
                                     <div className="space-y-4">
                                         <div className="grid grid-cols-4 gap-2">
-                                            {sortSizes(Object.keys(item.stock)).map((size) => {
-                                                const qty = item.stock[size]
+                                            {sortSizes(item.stock ? Object.keys(item.stock) : []).map((size) => {
+                                                const qty = item.stock?.[size] || 0
                                                 const isLow = qty < item.minThreshold
                                                 return (
                                                     <div key={size} className={`p-2 rounded-lg border text-center ${isLow ? 'bg-red-50 border-red-200' : 'bg-white'}`}>

@@ -5,10 +5,13 @@ export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
-export function sortSizes(sizes: string[]): string[] {
+export function sortSizes(sizes: string[] | undefined | null): string[] {
+    if (!sizes || !Array.isArray(sizes)) return [];
+
     const sizeOrder = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL", "XXXXL"];
 
     return [...sizes].sort((a, b) => {
+        if (typeof a !== 'string' || typeof b !== 'string') return 0;
         const isANumeric = !isNaN(Number(a));
         const isBNumeric = !isNaN(Number(b));
 

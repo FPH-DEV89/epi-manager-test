@@ -31,7 +31,7 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
     })
 
     const selectedCategory = stockItems.find(item => item.category === form.category)
-    const sizes = selectedCategory ? sortSizes(Object.keys(selectedCategory.stock)) : []
+    const sizes = (selectedCategory && selectedCategory.stock) ? sortSizes(Object.keys(selectedCategory.stock)) : []
 
     const next = () => setStep(s => s + 1)
     const back = () => setStep(s => s - 1)

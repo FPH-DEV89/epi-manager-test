@@ -70,7 +70,15 @@ export default function ManagerDashboard({
     }
 
     const saveStock = async (itemId: string) => {
-        // Collect all size updates (this is a simplified demo)
+        // Optimistic update: update local state immediately
+        setStock(prevStock => prevStock.map(item => {
+            if (item.id === itemId) {
+                return { ...item, stock: { ...item.stock, ...editValues } }
+            }
+            return item
+        }))
+
+        // Collect all size updates
         for (const [size, qty] of Object.entries(editValues)) {
             await updateStock(itemId, size, Number(qty))
         }

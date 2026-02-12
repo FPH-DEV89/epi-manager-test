@@ -33,6 +33,7 @@ export async function createRequests(formData: {
         });
 
         revalidatePath("/");
+        revalidatePath("/admin");
         return { success: true, count: 1 };
     } catch (error) {
         console.error("Failed to create requests:", error);
@@ -104,6 +105,7 @@ export async function validateRequest(requestId: string) {
         });
 
         revalidatePath("/");
+        revalidatePath("/admin");
         return { success: true };
     } catch (error) {
         console.error("Failed to validate request:", error);
@@ -118,6 +120,7 @@ export async function rejectRequest(requestId: string) {
             data: { status: "Rejected" },
         });
         revalidatePath("/");
+        revalidatePath("/admin");
         return { success: true };
     } catch (error) {
         return { success: false, error: "Erreur lors du rejet" };

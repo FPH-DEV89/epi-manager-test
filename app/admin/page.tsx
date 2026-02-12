@@ -6,7 +6,10 @@ export const dynamic = "force-dynamic"
 export default async function AdminPage() {
     try {
         const [requests, stock] = await Promise.all([
-            prisma.request.findMany({ orderBy: { createdAt: 'desc' } }),
+            prisma.request.findMany({
+                orderBy: { createdAt: 'desc' },
+                include: { items: true }
+            }),
             prisma.stockItem.findMany({ orderBy: { label: 'asc' } })
         ])
 
@@ -15,8 +18,7 @@ export default async function AdminPage() {
             id: r.id,
             employeeName: r.employeeName,
             service: r.service,
-            category: r.category,
-            size: r.size,
+            items: r.items,
             reason: r.reason,
             status: r.status,
             createdAt: r.createdAt.toISOString()

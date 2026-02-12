@@ -5,6 +5,41 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+export async function createRequests(formData: {
+    employeeName: string;
+    firstName: string;
+    service: string;
+    items: { category: string; size: string }[];
+    reason: string;
+}) {
+    try {
+        const { firstName, employeeName, service, items, reason } = formData;
+        const fullName = `${firstName} ${employeeName}`;
+
+        const request = await prisma.request.create({
+            data: {
+                employeeName: fullName,
+                service,
+                reason,
+                status: "Pending",
+                items: {
+                    create: items.map(item => ({
+                        category: item.category,
+                        size: item.size
+                    }))
+                }
+            },
+            include: { items: true }
+        });
+
+        revalidatePath("/");
+        return { success: true, count: 1 };
+    } catch (error) {
+        console.error("Failed to create requests:", error);
+        return { success: false, error: "Erreur lors de la création de la demande" };
+    }
+}
+
 export async function createRequest(formData: {
     employeeName: string;
     firstName: string;
@@ -13,57 +48,60 @@ export async function createRequest(formData: {
     size: string;
     reason: string;
 }) {
-    try {
-        const { firstName, ...rest } = formData;
-        const request = await prisma.request.create({
-            data: {
-                ...rest,
-                employeeName: `${firstName} ${rest.employeeName}`,
-                status: "Pending",
-            },
-        });
-        revalidatePath("/");
-        return { success: true, data: request };
-    } catch (error) {
-        console.error("Failed to create request:", error);
-        return { success: false, error: "Erreur lors de la création de la demande" };
-    }
+    return createRequests({
+        ...formData,
+        items: [{ category: formData.category, size: formData.size }]
+    });
 }
 
 export async function validateRequest(requestId: string) {
     try {
         const request = await prisma.request.findUnique({
             where: { id: requestId },
+            include: { items: true }
         });
 
         if (!request) return { success: false, error: "Demande introuvable" };
 
-        const stockItem = await prisma.stockItem.findUnique({
-            where: { category: request.category },
-        });
+        // Check stock for all items
+        for (const item of request.items) {
+            const stockItem = await prisma.stockItem.findFirst({
+                where: { category: item.category },
+            });
 
-        if (!stockItem) return { success: false, error: "Équipement introuvable" };
+            if (!stockItem) return { success: false, error: `Équipement ${item.category} introuvable` };
 
-        const stock = (stockItem.stock as Record<string, number>) || {};
-        const currentQuantity = stock[request.size] || 0;
+            const stock = (stockItem.stock as Record<string, number>) || {};
+            const currentQuantity = stock[item.size] || 0;
 
-        if (currentQuantity <= 0) {
-            return { success: false, error: "Stock épuisé pour cette taille" };
+            if (currentQuantity <= 0) {
+                return { success: false, error: `Stock épuisé pour ${item.category} (${item.size})` };
+            }
         }
 
-        // Decrement stock
-        const newStock = { ...stock, [request.size]: currentQuantity - 1 };
+        // Decrement stock for all items
+        await prisma.$transaction(async (tx) => {
+            for (const item of request.items) {
+                const stockItem = await tx.stockItem.findFirst({
+                    where: { category: item.category },
+                });
 
-        await prisma.$transaction([
-            prisma.stockItem.update({
-                where: { id: stockItem.id },
-                data: { stock: newStock },
-            }),
-            prisma.request.update({
+                if (stockItem) {
+                     const stock = (stockItem.stock as Record<string, number>) || {};
+                     const newStock = { ...stock, [item.size]: (stock[item.size] || 0) - 1 };
+                     
+                     await tx.stockItem.update({
+                         where: { id: stockItem.id },
+                         data: { stock: newStock }
+                     });
+                }
+            }
+
+            await tx.request.update({
                 where: { id: requestId },
                 data: { status: "Ordered" },
-            }),
-        ]);
+            });
+        });
 
         revalidatePath("/");
         return { success: true };

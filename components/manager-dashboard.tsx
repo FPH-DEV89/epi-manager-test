@@ -10,14 +10,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { validateRequest, rejectRequest, updateStock } from "@/app/actions"
 import { sortSizes } from "@/lib/utils"
-import { Package, ClipboardList, Settings, Save, X, Check, History, Download } from "lucide-react"
+import { Package, ClipboardList, Settings, Save, X, Check, History, Download, BarChart3 } from "lucide-react"
+import StatisticsDashboard from "./statistics-dashboard"
 
 interface Request {
     id: string
     employeeName: string
     service: string
-    category: string
-    size: string
+    items: { category: string; size: string }[]
     reason: string
     status: string
     createdAt: string
@@ -35,14 +35,25 @@ export default function ManagerDashboard({
     initialRequests,
     initialStock
 }: {
-    initialRequests: any[],
-    initialStock: any[]
+    initialRequests: Request[],
+    initialStock: StockItem[]
 }) {
     const [requests, setRequests] = useState(initialRequests)
     const [stock, setStock] = useState(initialStock)
+
+    // Sync state with props when router.refresh() is called
+    useEffect(() => {
+        setRequests(initialRequests)
+    }, [initialRequests])
+
+    useEffect(() => {
+        setStock(initialStock)
+    }, [initialStock])
+
     const [editingStockId, setEditingStockId] = useState<string | null>(null)
     const [editValues, setEditValues] = useState<Record<string, number>>({})
     const [showSuccess, setShowSuccess] = useState(false)
+    const [successMessage, setSuccessMessage] = useState("")
     const [activeTab, setActiveTab] = useState("requests")
     const router = useRouter()
     // Auth is now handled by the proxy middleware
@@ -50,18 +61,36 @@ export default function ManagerDashboard({
 
     if (!isAuthorized) return null
 
-    const handleValidate = async (id: string) => {
+    const handleValidate = async (id: string, employeeName: string) => {
+        if (!window.confirm(`Voulez-vous vraiment valider la demande de ${employeeName} ?`)) {
+            return
+        }
+
         const res = await validateRequest(id)
         if (res.success) {
+            setSuccessMessage("Demande validée avec succès !")
+            setShowSuccess(true)
             router.refresh()
+            setTimeout(() => setShowSuccess(false), 3000)
         } else {
             alert(res.error)
         }
     }
 
-    const handleReject = async (id: string) => {
-        await rejectRequest(id)
-        router.refresh()
+    const handleReject = async (id: string, employeeName: string) => {
+        if (!window.confirm(`Voulez-vous vraiment refuser la demande de ${employeeName} ?`)) {
+            return
+        }
+
+        const res = await rejectRequest(id)
+        if (res.success) {
+            setSuccessMessage("Demande refusée.")
+            setShowSuccess(true)
+            router.refresh()
+            setTimeout(() => setShowSuccess(false), 3000)
+        } else {
+            alert(res.error)
+        }
     }
 
     const startEditing = (item: StockItem) => {
@@ -83,6 +112,7 @@ export default function ManagerDashboard({
             await updateStock(itemId, size, Number(qty))
         }
         setEditingStockId(null)
+        setSuccessMessage("Modifications enregistrées !")
         setShowSuccess(true)
         router.refresh()
 
@@ -95,14 +125,19 @@ export default function ManagerDashboard({
     const exportRequestsToCSV = () => {
         const pendingRequests = requests.filter(r => r.status === "Pending")
         const headers = ["Date", "Collaborateur", "Service", "Equipement", "Taille", "Raison"]
-        const rows = pendingRequests.map(r => [
-            new Date(r.createdAt).toLocaleDateString("fr-FR"),
-            r.employeeName,
-            r.service,
-            r.category,
-            r.size,
-            r.reason || ""
-        ])
+        const rows: string[][] = []
+        pendingRequests.forEach(r => {
+            r.items.forEach(item => {
+                rows.push([
+                    new Date(r.createdAt).toLocaleDateString("fr-FR"),
+                    r.employeeName,
+                    r.service,
+                    item.category,
+                    item.size,
+                    r.reason || ""
+                ])
+            })
+        })
 
         const csvContent = [
             headers.join(";"),
@@ -140,14 +175,19 @@ export default function ManagerDashboard({
     const exportToCSV = () => {
         const processedRequests = requests.filter(r => r.status !== "Pending")
         const headers = ["Date", "Collaborateur", "Service", "Equipement", "Taille", "Statut"]
-        const rows = processedRequests.map(r => [
-            new Date(r.createdAt).toLocaleDateString("fr-FR"),
-            r.employeeName,
-            r.service,
-            r.category,
-            r.size,
-            r.status === "Ordered" ? "Validé" : "Refusé"
-        ])
+        const rows: string[][] = []
+        processedRequests.forEach(r => {
+            r.items.forEach(item => {
+                rows.push([
+                    new Date(r.createdAt).toLocaleDateString("fr-FR"),
+                    r.employeeName,
+                    r.service,
+                    item.category,
+                    item.size,
+                    r.status === "Ordered" ? "Validé" : "Refusé"
+                ])
+            })
+        })
 
         const csvContent = [
             headers.join(";"),
@@ -176,14 +216,13 @@ export default function ManagerDashboard({
                     <h1 className="text-3xl font-bold text-gray-900">Dashboard Manager</h1>
                     <p className="text-gray-500">Gestion des stocks et demandes d'EPI</p>
                 </div>
-                <Badge className="bg-brand text-white px-4 py-1 text-sm">ADMIN MODE</Badge>
             </div>
 
             {showSuccess && (
                 <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="bg-emerald-500 text-white px-6 py-3 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center gap-2 border border-emerald-400">
                         <Check className="w-5 h-5" />
-                        <span className="font-bold uppercase tracking-wide text-sm">Modifications enregistrées !</span>
+                        <span className="font-bold uppercase tracking-wide text-sm">{successMessage}</span>
                     </div>
                 </div>
             )}
@@ -198,6 +237,9 @@ export default function ManagerDashboard({
                     </TabsTrigger>
                     <TabsTrigger value="inventory" className="data-[state=active]:text-brand">
                         <Package className="w-4 h-4 mr-2" /> Inventaire
+                    </TabsTrigger>
+                    <TabsTrigger value="statistics" className="data-[state=active]:text-brand">
+                        <BarChart3 className="w-4 h-4 mr-2" /> Statistiques
                     </TabsTrigger>
                 </TabsList>
 
@@ -235,20 +277,36 @@ export default function ManagerDashboard({
                                             <TableCell>
                                                 <div className="font-medium">{req.employeeName}</div>
                                                 <div className="text-xs text-gray-500">{req.service}</div>
+                                                <div className="text-[10px] text-gray-400 mt-1 italic">"{req.reason}"</div>
                                             </TableCell>
-                                            <TableCell>{req.category}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="secondary">{req.size}</Badge>
+                                            <TableCell colSpan={2}>
+                                                <div className="space-y-1">
+                                                    {req.items.map((item, i) => (
+                                                        <div key={i} className="flex items-center justify-between text-sm bg-slate-50 p-1 rounded">
+                                                            <span>{item.category}</span>
+                                                            <Badge variant="secondary" className="text-[10px] h-5">{item.size}</Badge>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary">{req.status}</Badge>
                                             </TableCell>
                                             <TableCell className="text-right space-x-2">
-                                                <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleReject(req.id)}>
-                                                    Refuser
-                                                </Button>
-                                                <Button size="sm" onClick={() => handleValidate(req.id)}>
+                                                <Button
+                                                    size="sm"
+                                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                    onClick={() => handleValidate(req.id, req.employeeName)}
+                                                >
                                                     Valider
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="text-red-600 border-red-200 hover:bg-red-50"
+                                                    onClick={() => handleReject(req.id, req.employeeName)}
+                                                >
+                                                    Refuser
                                                 </Button>
                                             </TableCell>
                                         </TableRow>
@@ -305,9 +363,15 @@ export default function ManagerDashboard({
                                                 <div className="font-medium text-sm">{req.employeeName}</div>
                                                 <div className="text-[10px] text-gray-400 uppercase font-bold">{req.service}</div>
                                             </TableCell>
-                                            <TableCell className="text-sm">{req.category}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className="text-[10px] font-bold">{req.size}</Badge>
+                                            <TableCell colSpan={2}>
+                                                <div className="space-y-1">
+                                                    {req.items.map((item, i) => (
+                                                        <div key={i} className="flex items-center gap-2 text-sm">
+                                                            <span>{item.category}</span>
+                                                            <Badge variant="outline" className="text-[10px] h-5">{item.size}</Badge>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge className={`text-[10px] font-black uppercase tracking-widest ${req.status === "Ordered" ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"
@@ -403,6 +467,12 @@ export default function ManagerDashboard({
                         ))}
                     </div>
                 </TabsContent>
+
+
+                <TabsContent value="statistics">
+                    <StatisticsDashboard requests={requests} showHeader={false} />
+                </TabsContent>
+
             </Tabs>
         </div>
     )

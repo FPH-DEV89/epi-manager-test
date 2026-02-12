@@ -8,15 +8,23 @@ datasource db {
 }
 
 model Request {
-  id           String   @id @default(cuid())
+  id           String        @id @default(cuid())
   employeeName String
   service      String
-  category     String
-  size         String
   reason       String
-  status       String   @default("Pending")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  items        RequestItem[]
+  status       String        @default("Pending")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model RequestItem {
+  id        String  @id @default(cuid())
+  requestId String
+  request   Request @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  category  String
+  size      String
+  quantity  Int     @default(1)
 }
 
 model StockItem {

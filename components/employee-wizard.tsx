@@ -6,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { createRequest } from "@/app/actions"
+import { createRequests } from "@/app/actions"
 import { sortSizes } from "@/lib/utils"
 import { ChevronRight, ChevronLeft, CheckCircle2, User, HardHat, Ruler, Info } from "lucide-react"
 
@@ -25,20 +25,51 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
         employeeName: "",
         firstName: "",
         service: "",
-        category: "",
-        size: "",
+        categories: [] as string[],
+        sizes: {} as Record<string, string>,
         reason: ""
     })
-
-    const selectedCategory = stockItems.find(item => item.category === form.category)
-    const sizes = (selectedCategory && selectedCategory.stock) ? sortSizes(Object.keys(selectedCategory.stock)) : []
 
     const next = () => setStep(s => s + 1)
     const back = () => setStep(s => s - 1)
 
+    const toggleCategory = (category: string) => {
+        setForm(prev => {
+            if (prev.categories.includes(category)) {
+                const { [category]: _, ...remainingSizes } = prev.sizes
+                return {
+                    ...prev,
+                    categories: prev.categories.filter(c => c !== category),
+                    sizes: remainingSizes
+                }
+            } else {
+                return {
+                    ...prev,
+                    categories: [...prev.categories, category]
+                }
+            }
+        })
+    }
+
+    const setSize = (category: string, size: string) => {
+        setForm(prev => ({
+            ...prev,
+            sizes: { ...prev.sizes, [category]: size }
+        }))
+    }
+
     const handleSubmit = async () => {
         setLoading(true)
-        const res = await createRequest(form)
+        const res = await createRequests({
+            employeeName: form.employeeName,
+            firstName: form.firstName,
+            service: form.service,
+            reason: form.reason,
+            items: form.categories.map(cat => ({
+                category: cat,
+                size: form.sizes[cat]
+            }))
+        })
         if (res.success) setSuccess(true)
         setLoading(false)
     }
@@ -49,7 +80,7 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
                 <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <CardTitle className="mb-2">Demande Envoyée !</CardTitle>
                 <CardDescription>
-                    Ta demande d'équipement a bien été enregistrée et sera traitée par ton manager.
+                    Tes demandes d'équipement ont bien été enregistrées et seront traitées par ton manager.
                 </CardDescription>
                 <Button className="mt-6 w-full" onClick={() => window.location.reload()}>
                     Nouvelle Demande
@@ -62,7 +93,7 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
         <Card className="max-w-md mx-auto mt-10 shadow-2xl border-none rounded-4xl overflow-hidden">
             <CardHeader className="bg-white pt-10 pb-2 px-8">
                 <CardTitle className="text-3xl font-black text-slate-800 tracking-tight">
-                    {step === 2 ? "Quelle EPI" : step === 3 ? "Taille" : step === 4 ? "Motif" : "Demande EPI"}
+                    {step === 2 ? "Quels EPI ?" : step === 3 ? "Tailles" : step === 4 ? "Motif" : "Demande EPI"}
                 </CardTitle>
             </CardHeader>
 
@@ -102,16 +133,19 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
 
                 {step === 2 && (
                     <div className="space-y-4">
-                        <Label>Type d'Équipement</Label>
+                        <Label>Type d'Équipement (plusieurs choix possibles)</Label>
                         <div className="grid grid-cols-1 gap-2">
                             {stockItems.map(item => (
                                 <Button
                                     key={item.id}
-                                    variant={form.category === item.category ? "default" : "outline"}
+                                    variant={form.categories.includes(item.category) ? "default" : "outline"}
                                     className="justify-start h-14"
-                                    onClick={() => setForm({ ...form, category: item.category, size: "" })}
+                                    onClick={() => toggleCategory(item.category)}
                                 >
-                                    {item.label}
+                                    <div className="flex items-center justify-between w-full">
+                                        <span>{item.label}</span>
+                                        {form.categories.includes(item.category) && <CheckCircle2 className="w-4 h-4" />}
+                                    </div>
                                 </Button>
                             ))}
                         </div>
@@ -119,25 +153,33 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
                 )}
 
                 {step === 3 && (
-                    <div className="space-y-4">
-                        <Label>Taille Disponible</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                            {sizes.map(size => {
-                                const isOutOfStock = (selectedCategory?.stock?.[size] || 0) <= 0
-                                return (
-                                    <Button
-                                        key={size}
-                                        variant={form.size === size ? "default" : "outline"}
-                                        disabled={isOutOfStock}
-                                        className={`h-12 ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
-                                        onClick={() => setForm({ ...form, size })}
-                                    >
-                                        {size}
-                                        {isOutOfStock && <span className="block text-[8px] font-bold">OUT</span>}
-                                    </Button>
-                                )
-                            })}
-                        </div>
+                    <div className="space-y-6">
+                        {form.categories.map(cat => {
+                            const item = stockItems.find(i => i.category === cat)
+                            const sizes = item ? sortSizes(Object.keys(item.stock)) : []
+                            return (
+                                <div key={cat} className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <Label className="font-bold text-slate-700">{item?.label}</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {sizes.map(size => {
+                                            const isOutOfStock = (item?.stock?.[size] || 0) <= 0
+                                            return (
+                                                <Button
+                                                    key={size}
+                                                    variant={form.sizes[cat] === size ? "default" : "outline"}
+                                                    disabled={isOutOfStock}
+                                                    className={`h-10 text-xs ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
+                                                    onClick={() => setSize(cat, size)}
+                                                >
+                                                    {size}
+                                                    {isOutOfStock && <span className="block text-[8px] font-bold">OUT</span>}
+                                                </Button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 )}
 
@@ -155,7 +197,7 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
                                 <option value="Nouvel arrivant">Nouvel arrivant</option>
                             </select>
                         </div>
-                        <div className="bg-slate-50 rounded-3xl p-6 space-y-4 border border-slate-100">
+                        <div className="bg-slate-50 rounded-3xl p-6 space-y-4 border border-slate-100 max-h-[300px] overflow-y-auto">
                             <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
                                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                     <Info className="w-3 h-3" /> Récapitulatif
@@ -173,25 +215,24 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
-                                        <HardHat className="w-4 h-4 text-slate-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Équipement</p>
-                                        <p className="text-sm font-bold text-slate-700">{selectedCategory?.label}</p>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
-                                        <Ruler className="w-4 h-4 text-slate-400" />
-                                    </div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Taille</p>
-                                        <p className="text-sm font-bold text-slate-700">{form.size}</p>
-                                    </div>
-                                </div>
+                                {form.categories.map(cat => {
+                                    const item = stockItems.find(i => i.category === cat)
+                                    return (
+                                        <div key={cat} className="flex items-center gap-4 border-t border-slate-100 pt-2">
+                                            <div className="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
+                                                <HardHat className="w-4 h-4 text-slate-400" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Équipement</p>
+                                                <p className="text-sm font-bold text-slate-700">{item?.label}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Taille</p>
+                                                <Badge variant="secondary" className="font-bold">{form.sizes[cat]}</Badge>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
                     </div>
@@ -208,8 +249,8 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
                 {step < 4 ? (
                     (() => {
                         const isValid = (step === 1 && form.employeeName && form.firstName && form.service) ||
-                            (step === 2 && form.category) ||
-                            (step === 3 && form.size);
+                            (step === 2 && form.categories.length > 0) ||
+                            (step === 3 && form.categories.every(cat => form.sizes[cat]));
                         return (
                             <Button
                                 className={`rounded-2xl h-14 px-8 text-lg font-bold shadow-md transition-all flex items-center gap-2 ${isValid

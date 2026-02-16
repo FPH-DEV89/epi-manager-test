@@ -88,13 +88,13 @@ export async function validateRequest(requestId: string) {
                 });
 
                 if (stockItem) {
-                     const stock = (stockItem.stock as Record<string, number>) || {};
-                     const newStock = { ...stock, [item.size]: (stock[item.size] || 0) - 1 };
-                     
-                     await tx.stockItem.update({
-                         where: { id: stockItem.id },
-                         data: { stock: newStock }
-                     });
+                    const stock = (stockItem.stock as Record<string, number>) || {};
+                    const newStock = { ...stock, [item.size]: (stock[item.size] || 0) - 1 };
+
+                    await tx.stockItem.update({
+                        where: { id: stockItem.id },
+                        data: { stock: newStock }
+                    });
                 }
             }
 
@@ -151,22 +151,3 @@ export async function updateStock(categoryId: string, size: string, quantity: nu
     }
 }
 
-export async function login(password: string) {
-    if (password === "admin") {
-        const cookieStore = await cookies();
-        cookieStore.set("admin_auth", "true", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 60 * 60 * 24, // 1 day
-        });
-        return { success: true };
-    }
-    return { success: false, error: "Mot de passe incorrect" };
-}
-
-export async function logout() {
-    const cookieStore = await cookies();
-    cookieStore.delete("admin_auth");
-    redirect("/login");
-}

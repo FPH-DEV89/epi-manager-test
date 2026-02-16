@@ -168,11 +168,22 @@ export default function EmployeeWizard({ stockItems }: { stockItems: StockItem[]
                                                     key={size}
                                                     variant={form.sizes[cat] === size ? "default" : "outline"}
                                                     disabled={isOutOfStock}
-                                                    className={`h-10 text-xs ${isOutOfStock ? 'opacity-50 cursor-not-allowed bg-gray-100' : ''}`}
+                                                    className={`h-12 relative overflow-hidden transition-all ${isOutOfStock
+                                                        ? 'opacity-40 grayscale cursor-not-allowed bg-slate-100 border-dashed border-slate-300'
+                                                        : form.sizes[cat] === size
+                                                            ? 'ring-2 ring-brand ring-offset-2'
+                                                            : 'hover:border-brand/50 hover:bg-brand/5'
+                                                        }`}
                                                     onClick={() => setSize(cat, size)}
                                                 >
-                                                    {size}
-                                                    {isOutOfStock && <span className="block text-[8px] font-bold">OUT</span>}
+                                                    <span className={isOutOfStock ? "text-xs font-medium" : "text-sm font-bold"}>{size}</span>
+                                                    {isOutOfStock && (
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-slate-100/80 backdrop-blur-[1px]">
+                                                            <Badge variant="destructive" className="h-5 text-[9px] px-1.5 font-black uppercase tracking-wider scale-90">
+                                                                Épuisé
+                                                            </Badge>
+                                                        </div>
+                                                    )}
                                                 </Button>
                                             )
                                         })}

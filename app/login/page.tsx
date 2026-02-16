@@ -1,33 +1,15 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useFormState, useFormStatus } from 'react-dom'
+import { authenticate } from '@/app/lib/actions'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Lock } from "lucide-react"
 
-import { login } from "@/app/actions"
-
 export default function LoginPage() {
-    const [password, setPassword] = useState("")
-    const [error, setError] = useState(false)
-    const [loading, setLoading] = useState(false)
-    const router = useRouter()
-
-    const handleLogin = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-        const res = await login(password)
-        if (res.success) {
-            router.push("/admin")
-            router.refresh()
-        } else {
-            setError(true)
-            setLoading(false)
-        }
-    }
+    const [errorMessage, dispatch] = useFormState(authenticate, undefined)
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -39,31 +21,41 @@ export default function LoginPage() {
                     <CardTitle>Accès Manager</CardTitle>
                     <CardDescription>Saisissez le mot de passe pour accéder au dashboard.</CardDescription>
                 </CardHeader>
-                <form onSubmit={handleLogin}>
+                <form action={dispatch}>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" name="email" placeholder="admin@epi-manager.com" required />
+                        </div>
+                        <div className="space-y-2">
                             <Label htmlFor="password">Mot de passe</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value)
-                                    setError(false)
-                                }}
-                                className={error ? "border-red-500" : ""}
-                            />
-                            {error && <p className="text-xs text-red-500">Mot de passe incorrect.</p>}
+                            <Input id="password" type="password" name="password" placeholder="••••••••" required />
+                        </div>
+                        <div
+                            className="flex h-8 items-end space-x-1"
+                            aria-live="polite"
+                            aria-atomic="true"
+                        >
+                            {errorMessage && (
+                                <p className="text-sm text-red-500">{errorMessage}</p>
+                            )}
                         </div>
                     </CardContent>
                     <CardFooter>
-                        <Button type="submit" className="w-full" disabled={loading}>
-                            {loading ? "Connexion..." : "Se connecter"}
-                        </Button>
+                        <LoginButton />
                     </CardFooter>
                 </form>
             </Card>
         </div>
+    )
+}
+
+function LoginButton() {
+    const { pending } = useFormStatus()
+
+    return (
+        <Button className="w-full" aria-disabled={pending}>
+            {pending ? "Connexion..." : "Se connecter"}
+        </Button>
     )
 }

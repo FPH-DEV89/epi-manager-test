@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { HardHat, LogOut } from "lucide-react"
-import { logout } from "@/app/actions"
+import { handleSignOut } from "@/app/lib/actions"
 
 export default function Navbar() {
     const pathname = usePathname()
@@ -40,13 +40,15 @@ export default function Navbar() {
                 })}
 
                 {pathname.startsWith("/admin") && (
-                    <button
-                        onClick={() => logout()}
-                        className="ml-2 p-2 rounded-lg text-white hover:bg-white/10 transition-all"
-                        title="Déconnexion"
-                    >
-                        <LogOut className="w-5 h-5" />
-                    </button>
+                    <form action={handleSignOut}>
+                        <button
+                            type="submit"
+                            className="ml-2 p-2 rounded-lg text-white hover:bg-white/10 transition-all"
+                            title="Déconnexion"
+                        >
+                            <LogOut className="w-5 h-5" />
+                        </button>
+                    </form>
                 )}
             </nav>
         </header>

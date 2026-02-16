@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EPI MANAGER 🛡️
 
-## Getting Started
+Système de gestion de stock et de demandes d'Équipements de Protection Individuelle (EPI).
 
-First, run the development server:
+## 🚀 Fonctionnalités
 
+- **Employés** : Assistant interactif pour demander des équipements (taille, type, raison).
+- **Managers** : Dashboard sécurisé pour valider/refuser les demandes et gérer les stocks.
+- **Sécurité** : Authentification via NextAuth (Zone Admin protégée).
+- **Suivi** : Historique des demandes et état des stocks en temps réel.
+
+## 🛠️ Stack Technique
+
+- **Framework** : Next.js 15 (App Router)
+- **Langage** : TypeScript
+- **Style** : Tailwind CSS v4
+- **Base de Données** : PostgreSQL (via Prisma)
+- **Tests** : Vitest
+- **CI/CD** : GitHub Actions
+
+## 📦 Installation
+
+1.  **Cloner le projet** :
+    ```bash
+    git clone https://github.com/Start-sys-hub/EPI-MANAGER.git
+    cd epi-manager
+    ```
+
+2.  **Installer les dépendances** :
+    ```bash
+    npm install
+    ```
+
+3.  **Configurer l'environnement** :
+    Créez un fichier `.env` à la racine :
+    ```env
+    DATABASE_URL="postgresql://user:password@localhost:5432/epi_manager"
+    AUTH_SECRET="votre_secret_super_securise"
+    ```
+
+4.  **Initialiser la Base de Données** :
+    ```bash
+    npx prisma migrate dev
+    npm run seed # Pour ajouter les données de test
+    ```
+
+5.  **Lancer le serveur de développement** :
+    ```bash
+    npm run dev
+    ```
+
+## 🧪 Tests
+
+Lancer les tests unitaires :
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm test
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔐 Accès Manager
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Pour accéder à la zone manager (`/admin`), utilisez les identifiants par défaut (en dev) :
+- **Email** : `admin@epi-manager.com`
+- **Mot de passe** : `admin123`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🤖 L'Équipe Autonome
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ce projet est maintenu par une équipe d'agents IA autonomes :
+- **Chef** : Coordination
+- **Expert Métier** : Logique de gestion
+- **Design** : Interface Utilisateur
+- **Front-End & Back-End** : Code
+- **Security** : Authentification
+- **QA** : Tests
+- **DevOps** : CI/CD
